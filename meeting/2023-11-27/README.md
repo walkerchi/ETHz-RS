@@ -6,15 +6,63 @@
 
 Sensor : Camera (Phone)
 
+Limitation:
+
+1. manual postprocessing is required, (minimally textured area)
+2. contact-rich task are required to evaluate further limitation.
+3. Should sperate process static scene and dynamic objects
+4. high cost of NeRF
+
+Advantage:
+
+1. NeRF significantly reduces the sim2real gap with realistic scene renderings
+2. videos from commodity mobile devices to create realistic simulations.  This makes the system accessible and practical, as it doesn't require  specialized hardware.
+
+Pipeline:
+
+1. 5-6min video from phone
+2. equally get $N$ frames without blur
+3. use COLMAP to get the intrinsic and extrinsic (3-4h)
+4. nerf train(20min on 8 V100s) , nerf rendering(6ms on V100)
+5. calibrate robot's camera
+6. use focal length /distortion parameters to render from  NeRF
+7. calibrate nerf mesh with world manually using Blender
+8. use MuJoCo simulator
+   - static scene render : NeRF
+   - dynamic objects render : MuJoCo
+9. sensors: encoders, gyroscope, accelerometer, Logitech C920 camera
+10. domain randomization in the simulation
+11. task 
+    - navigation and obstacle avoidance
+    - ball pushing
+12. policy optimization : DMPO (24h)
+
 ![image-20231127005549136](README.assets/image-20231127005549136.png)
 
-This method enables the creation of photorealistic simulation environments from real-world scenes, captured simply using mobile cameras. The paper demonstrates the effective training and transfer of vision-based navigation and interaction policies for humanoid robots in these environments. 
+![image-20231130152039268](README.assets/image-20231130152039268.png)
 
 [UniSim: A Neural Closed-Loop Sensor Simulator](https://openaccess.thecvf.com/content/CVPR2023/papers/Yang_UniSim_A_Neural_Closed-Loop_Sensor_Simulator_CVPR_2023_paper.pdf)
 
 **Neural Field**
 
 Sensor : Camera & LiDAR
+
+Limitation: 
+
+1. requires LiDAR
+2. complex pipeline
+
+Advantage:
+
+1. using voxel rendering to leverage the computational cost
+2. produce higher-fidelity LiDAR simulation with less noise 
+3. closed loop simulation
+
+Pipeline :
+
+1. LiDAR data->point cloud->feature grid
+2. each actor is a feature grid modeled by individual MLP, whose parameters are all controlled by hypernet
+
 $$
 \text{3D World} = \text{Static Background} + \text{Moving Actors}
 $$
@@ -32,19 +80,43 @@ Sensor :  LiDAR, RGB
 
 Purpose : Generate realistically looking camera images (**Texture**)
 
+Advantage : 
+
+1. the first to build purely data-driven camera simulation system for autonomous driving.
+2. High realism
+
+Limitation:
+
+1. SurfelGAN unable to recover from broken geometry
+2. Place where surfel map does not cover will cause Hallucination
+3. complex training process(Semantic Segmentation, Instance Segmentation)
+
 Method : $\text{Surfels}(\text{from LiDAR}) \overset{\text{Surfel GAN}}{\to} \text{Images}(\text{from RGB cam})$
 
 ![image-20231118132436647](README.assets/image-20231118132436647.png)
 
+![image-20231130174557757](README.assets/image-20231130174557757.png)
+
 ![image-20231127015254003](README.assets/image-20231127015254003.png)
 
-Surfel :  A surfel is a small, oriented disk used to represent a portion of a 3D surface. 
+Surfel(**surf**ace **el**ement) :  A surfel is a small, oriented disk used to represent a portion of a 3D surface. 
+
+![image8](README.assets/image8.png)
 
 [Real2Sim2Real: Self-Supervised Learning of Physical Single-Step Dynamic Actions for Planar Robot Casting](https://ieeexplore.ieee.org/abstract/document/9811651?casa_token=SxdetTyMKtwAAAAA:bFLA3RhAEgzMdwbqSwBk9a37yYr3Dh356vYt0-nc4cKDooO1vcrk_QDkQPtN7RmlNr1Cxum27Q)
 
 Sensor :  Logitech Brio 4K webcam
 
 Simulator : Issac, PyBullet
+
+Advantage : 
+
+1. self supervised, no manual  data labeling and intervention
+2. efficient learning from few physical examples (sim + real)
+
+Limitation : 
+
+1. harder to extend to 3D ,  inherent uncertainty about static and dynamic friction
 
 Method : 
 
@@ -61,9 +133,21 @@ PRC : Planar Robot Casting
 
 [Reinforcement and Imitation Learning for Diverse Visuomotor Skills](https://arxiv.org/pdf/1802.09564.pdf)
 
-Sensor : RGB
+Sensor : KinectRGB
+
+Advantage : 
+
+1. reinforcement learning + limitation learning 
+2. diverse task from small amount of human demonstration data
+
+Limitation : 
+
+1. Reality Gap in Sim2Real Transfer
+2. simulation’s dynamics parameters were manually adjusted
 
 a Kinect camera (RGBD) was visually calibrated to match the position and orientation of the simulated camera, and the simulation’s dynamics parameters were manually adjusted to match the dynamics of the real arm.
+
+![image-20231130184732860](README.assets/image-20231130184732860.png)
 
 ![image-20231126230550207](README.assets/image-20231126230550207.png)
 
@@ -75,6 +159,27 @@ GAIL : [Generative Adversarial Imitation Learning](https://arxiv.org/abs/1606.03
 
 **Kinect**: the motion sensing device for the Xbox 360 gaming console. It  provides RGB, Infra-Red (IR), depth, skeleton, and audio streams to an  application
 
+**Zed Camera** : neural  depth, built-in IMU
+
+**RealSense** : long range depth camera, built-in IMU
+
+[Sim2Real Neural Controllers for Physics-Based Robotic Deployment of Deformable Linear Objects](https://journals.sagepub.com/doi/full/10.1177/02783649231214553?casa_token=rFa2JSOkfZUAAAAA%3Are1_i1U8DMjF6MoxNmK7u4Us2_h0A6rDJH5wh6LmjqajzwA_OnWBzmXTmrCUH30zvgsYgoq9vGAa)
+
+Sensor : realsense
+
+Limitation : 
+
+- precision is not that good 
+- it's task specified , not generalized
+
+Advantage : 
+
+- simple architecture but effective
+
+![image-20231130191646534](README.assets/image-20231130191646534.png)
+
+DLO  : Deformable linear objects
+
 [LiDAR Data Noise Models and Methodology for Sim-to-Real Domain Generalization and Adaptation in Autonomous Driving Perception](https://ieeexplore.ieee.org/abstract/document/9576034?casa_token=GtXRx-HHKN0AAAAA:2Bq5SCP_NTqeJl1R7K-cfTeMTSPpWuJV-XrRJUmiu8uBgiyFJ80YOV4Ogw-UWPpvImDRGmKjhQ)
 
 **Domain randomization**
@@ -82,6 +187,14 @@ GAIL : [Generative Adversarial Imitation Learning](https://arxiv.org/abs/1606.03
 Sensor : LiDAR
 
 Task : Semantic Segmentation and Object Detection
+
+Advantage : 
+
+- naive but effective
+
+Limitation : 
+
+- assumption of Gaussian additive model(Noise Model) and Bernoulli distribution approximation(Point Dropout Model)
 
 Method : 
 $$
@@ -102,6 +215,15 @@ In the learning process of the study, the sensor error modeling is used  to make
 
 Sensor : LiDAR
 
+Advantage:
+
+- formulize the sensor modeling as image2image translation
+- easy pipeline
+
+Limitation:
+
+- NST requires workarounds via heuristics to feed the style with every frame generation.
+
 Problem : $\text{Sensor Modeling}\leftrightarrow \text{Image 2 Image Translation(Real LiDAR data} \leftrightarrow \text{Simulation LiDAR data)}$
 
 $$\text{Realistic LiDAR Data}=\text{CycleGAN}(\text{Simulated LiDAR Data},\text{Real-world LiDAR Features})$$
@@ -109,6 +231,14 @@ $$\text{Realistic LiDAR Data}=\text{CycleGAN}(\text{Simulated LiDAR Data},\text{
 The core of the paper is the formulation of the problem as an  image-to-image translation from unpaired data using CycleGANs. This  approach is used to solve the sensor modeling problem for LiDAR,  enabling the production of realistic LiDAR data from simulated LiDAR  (sim2real) and generating high-resolution realistic LiDAR from lower  resolution data (real2real).
 
 [Unsupervised Neural Sensor Models for Synthetic LiDAR Data Augmentation](https://arxiv.org/pdf/1911.10575.pdf)
+
+Advantage : 
+
+1. two available generator
+
+Limitation : 
+
+1. highly depend on cycleGAN and NST
 
 **Data Augment**
 
@@ -130,6 +260,14 @@ two main neural sensor models (NSMs) for LiDAR data augmentation using synthetic
 [Towards Zero Domain Gap: A Comprehensive Study of Realistic LiDAR Simulation for Autonomy Testing](https://openaccess.thecvf.com/content/ICCV2023/html/Manivasagam_Towards_Zero_Domain_Gap_A_Comprehensive_Study_of_Realistic_LiDAR_ICCV_2023_paper.html)
 
 **gap evaluation, Simulation Enhancement**
+
+Advantage : 
+
+- Comprehensive Analysis of LiDAR Phenomena
+
+Limitation : 
+
+- Focus on Analysis Rather Than Solution
 
 Reality Problems:
 
@@ -165,6 +303,14 @@ Simulator : Gazebo
 
 Task :  DRC Plug Task
 
+Advantage : 
+
+- simulation has real world feedback
+
+Limitation : 
+
+- The strategy, while effective, is specifically developed for flexible object manipulation. 
+
 Method : 
 
 - real world : visual servoing approach to align the cable-tip pose with the socket pose.
@@ -198,6 +344,14 @@ What makes Sim2Real2Sim innovative is its additional phase of refining the simul
 
 [Sim-to-Real Strategy for Spatially Aware Robot Navigation in Uneven Outdoor Environment](https://arxiv.org/pdf/2205.09194.pdf)
 
+Advantage :
+
+- avoid potential noise in the IMU signal
+
+Limitation : 
+
+- The current formulation of the robot's navigation system does not include the capability to avoid rough terrains
+
 ![image-20231125170008642](README.assets/image-20231125170008642.png)
 
 - point cloud is gained from LiDAR
@@ -207,11 +361,29 @@ What makes Sim2Real2Sim innovative is its additional phase of refining the simul
 
 [Policies Modulating Trajectory Generators](http://proceedings.mlr.press/v87/iscen18a/iscen18a.pdf)
 
+Advantage :
+
+- IMU signal coupled in the  policy network
+
+Limitation :
+
+-  The current approach relies on trajectory generators chosen based on intuition rather than a systematic method. 
+- only IMU, motor position information
+
 ![image-20231126160428912](README.assets/image-20231126160428912.png)
 
 **IMU as modal for policy (only IMU + motor position)**
 
 [Vision-Guided Quadrupedal Locomotion in the Wild with Multi-Modal Delay Randomization](https://ieeexplore.ieee.org/abstract/document/9981072?casa_token=QP7Zmn7hYbsAAAAA:hhPNopnwtBtvhhEm7JPqv8P8qgVfKUbPZccjQOrnONs9ZFfCg08QyVD8xg7o1PmPp-8GPuBpqA)
+
+Advantage :
+
+-  IMU signal coupled in the policy network
+- Multi-Modal information 
+
+Limitation : 
+
+- asynchronous multi-modal inputs for RL policies
 
 **IMU as modal input for policy**
 
@@ -220,6 +392,15 @@ What makes Sim2Real2Sim innovative is its additional phase of refining the simul
 
 
 [Zero-Shot Policy Transferability for the Control of a Scale Autonomous Vehicle](https://arxiv.org/pdf/2309.09870.pdf)
+
+Advantage:
+
+- explainable coupled with IMU signal
+
+Limitation : 
+
+- naive control 
+- IMU  signal is assumed to be exact
 
 **IMU for error estimation**
 $$
@@ -232,6 +413,14 @@ $$
 ![image-20231126163032832](README.assets/image-20231126163032832.png)
 
 [Learning Autonomous Mobility Using Real Demonstration Data](https://ieeexplore.ieee.org/abstract/document/9659394?casa_token=EBmmJwSObMkAAAAA:6377wLVFYOdx3EHzC7AzjvkidsD4o7gldrUkoS2VA2waQXM6fflUxgRLAGVWhpeZrgzx7e2Zew)
+
+Advantage : 
+
+- considering the time sequence influence of the IMU signal
+
+Limitation : 
+
+- not coupled with policy, only the acuators controller
 
 **Time sequence IMU modeling with NN**
 
@@ -256,6 +445,20 @@ optical tactile sensor, high resolution : GelSight, GelTip, TacTip, DIGIT
 
 [Touch driven controller and tactile features for physical interactions](https://www.sciencedirect.com/science/article/pii/S0921889019300697)
 
+Sensor : Tactile Array
+
+Advantage :
+
+- numerical robust
+- fast  
+
+Limitation : 
+
+- not precise enough
+- limit to specific contact configuration
+
+
+
 ![1-s2.0-S0921889019300697-gr8_lrg](README.assets/1-s2.0-S0921889019300697-gr8_lrg.jpg)
 
 $$
@@ -272,6 +475,16 @@ Inverse of Jacobian $J^{-1}$ is calculated by the contact pattern
 sensor : GelSight
 
 simulator : Gazebo 
+
+Advantage :
+
+-  high  resolution 
+- easy to implement, fast
+
+Limitation : 
+
+- Based on the modeling accuracy
+
 $$
 H_{\text{GelSight}}=\text{GF}(H_{\text{truth}})
 \\
@@ -282,6 +495,14 @@ $$
 ![image-20231126122548030](README.assets/image-20231126122548030.png)
 
 [Learning the sense of touch in simulation: a sim-to-real strategy for vision-based tactile sensing](https://ieeexplore.ieee.org/abstract/document/9341285?casa_token=2TdboohxzDMAAAAA:rQUYejq_kpeVCCf1tLGnMkkWQ8jK3Bytvo-obSKDyUddjPq2EoKqJlmCiQABTVRaDLOUuHD_YA)
+
+Advantage : 
+
+- FEM simulation is more precise 
+
+Limitation : 
+
+- the training result is related  to the FEM accuracy
 
 FEM solution also considered as ground truth
 
@@ -295,7 +516,21 @@ DIS: Dense Inverse Search ([Fast Optical Flow using Dense Inverse Search](https:
 
 [Skill generalization of tubular object manipulation with tactile sensing and Sim2Real learning](https://www.sciencedirect.com/science/article/pii/S092188902200210X?casa_token=iXRiFodccmcAAAAA:0Gts_R0rgC4aer0a_ghwW0dTd8lg13CE7jsT8bdY4MWXC6DzC798qknY9EQmrMBfIh7PdBcWVA)
 
+Simulator : Gazebo
+
+Advantage : 
+
+- use a anglenet to extract angle information from tactile information
+
+Limitation : 
+
+- the modeling of DIGIT is fully depend on Gazebo
+
 ![1-s2.0-S092188902200210X-ga1_lrg](README.assets/1-s2.0-S092188902200210X-ga1_lrg.jpg)
+
+(b) is trained in simulation 
+
+(c) is inference in the real
 
 purpose: learning Sim2Real transferable robotic insert-and-pullout actions
 
@@ -319,6 +554,14 @@ Wrench: The wrench reading of the robot is used to determine whether there are p
 
 sensor: BioTac, single point pressure sensor
 
+Advantage : 
+
+- 75 faster than previous model
+
+Limitation : 
+
+- linear elasticity is not accurate enough
+
 $E(\text{Young's modulus}),\mu(\text{friction}),\nu(\text{poisson ratio})$ are free parameters
 
 same indentation are applied in simulation
@@ -333,6 +576,14 @@ simulation: linear elasticity FEM
 
 [Control Transformer: Robot Navigation in Unknown Environments
 through PRM-Guided Return-Conditioned Sequence Modeling](https://arxiv.org/pdf/2211.06407.pdf)
+
+Advantage : 
+
+- effect in complex  environment (for policy)
+
+Limitation : 
+
+- assume encoders are correct, and use that to compute the error
 
 encoders and IMU are used to calculate current position $x_t$
 $$
@@ -349,6 +600,8 @@ $$
 ![image-20231126114435434](README.assets/image-20231126114435434.png)
 
 [NeuronsGym: A Hybrid Framework and Benchmark for Robot Tasks with Sim2Real Policy Learning](https://arxiv.org/pdf/2302.03385.pdf)
+
+A simulation framework
 $$
 \tilde \omega_i (t) = \omega_i(t) + n^e,n^e\sim\mathcal N(\mu_e, \sigma_e)
 $$
@@ -356,12 +609,16 @@ $$
 
 [LiDAR SLAM with a Wheel Encoder in a Featureless Tunnel Environment](https://www.mdpi.com/2079-9292/12/4/1002)
 
+Advantage :
+
+- combine IMU, Encoders, LiDAR using extended Kalman Filter
+
+Limitation : 
+
+- the algorithm is only validated in flat and inclined terrian
+
 use wheel encoder to correct the LiDAR data, but not related to simulation
 
 ![electronics-12-01002-g003](README.assets/electronics-12-01002-g003.png)
 
 EKF : extended Kalman Filter
-
-[http://conference.ioe.edu.np/ioegc2014/papers/IOE-CONF-2014-66.pdf](http://conference.ioe.edu.np/ioegc2014/papers/IOE-CONF-2014-66.pdf)
-
-![image-20231126113656320](C:/Users/walkerchi/AppData/Roaming/Typora/typora-user-images/image-20231126113656320.png)
