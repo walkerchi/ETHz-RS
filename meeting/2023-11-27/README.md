@@ -379,7 +379,7 @@ Limitation :
 Advantage :
 
 -  IMU signal coupled in the policy network
-- Multi-Modal information 
+- Multi-Modal information (buffer)
 
 Limitation : 
 
@@ -459,7 +459,7 @@ Limitation :
 
 
 
-![1-s2.0-S0921889019300697-gr8_lrg](README.assets/1-s2.0-S0921889019300697-gr8_lrg.jpg)
+![numer](README.assets/1-s2.0-S0921889019300697-gr8_lrg.jpg)
 
 $$
 \text{Physical Contact}\to J^{-1}\to \text{Controller}
