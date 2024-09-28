@@ -441,6 +441,12 @@ Limitation :
 - DWA: Dynamic Window Approach to penalize velocities that could cause robot flip-overs
 - IMU is processed by PCA
 
+$$
+\text{PCA}(\text{IMU})_{1,2}\leftrightarrow \text{Surface Virbration}
+$$
+
+
+
 **IMU as modal for policy (only IMU + motor position)**
 
 
